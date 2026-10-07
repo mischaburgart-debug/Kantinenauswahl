@@ -64,7 +64,7 @@
             border-radius: 4px;
             margin-bottom: 10px;
         }
-        /* Modal Style (Bestätigungsfenster) */
+        /* Popup / Modal Styling */
         .modal {
             display: none; 
             position: fixed; 
@@ -95,7 +95,6 @@
 <body>
 
 <div class="container">
-    <!-- Hauptformular -->
     <div class="main-form">
         <h2>Kantine - Essensbestellung</h2>
         <form id="orderForm">
@@ -118,28 +117,14 @@
         </form>
     </div>
 
-    <!-- Info-Seitenleiste -->
     <div class="sidebar">
         <h3>Aktuelle Menüs & Preise</h3>
-        <div class="menu-info">
-            <strong>Menü 1 (Klassiker)</strong><br>
-            Rindergulasch mit Spätzle und Beilagensalat.<br>
-            <em>Preis: 5,50 €</em>
-        </div>
-        <div class="menu-info">
-            <strong>Menü 2 (Vegetarisch)</strong><br>
-            Vegetarische Lasagne mit Tomatensauce.<br>
-            <em>Preis: 4,80 €</em>
-        </div>
-        <div class="menu-info">
-            <strong>Menü 3 (Vegan / Snack)</strong><br>
-            Großer bunter Atriumsalad mit Falafelbällchen.<br>
-            <em>Preis: 4,20 €</em>
-        </div>
+        <div class="menu-info"><strong>Menü 1 (Klassiker)</strong><br>Rindergulasch mit Spätzle.<br><em>Preis: 5,50 €</em></div>
+        <div class="menu-info"><strong>Menü 2 (Vegetarisch)</strong><br>Vegetarische Lasagne.<br><em>Preis: 4,80 €</em></div>
+        <div class="menu-info"><strong>Menü 3 (Vegan)</strong><br>Bunter Salat mit Falafel.<br><em>Preis: 4,20 €</em></div>
     </div>
 </div>
 
-<!-- Pop-up Fenster (Modal) -->
 <div id="thankYouModal" class="modal">
     <div class="modal-content">
         <h2>Vielen Dank für die Bestellung!</h2>
@@ -151,8 +136,8 @@
 </div>
 
 <script>
-    // ⚠️ ERSETZE DIESE URL MIT DEINER KOPIERTEN GOOGLE WEB-APP URL!
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtyVge3P_ekI5LPl4ZHPwKe1VgfDY6v3vBCKimnKH-s-ZLICpKe5_ZPagDy9pVlCWF/exec";
+    // ⚠️ HIER DEINE KOPIERTE GOOGLE WEB-APP URL EINFÜGEN!
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -161,7 +146,7 @@
         const menu = document.getElementById('menuSelect').value;
         const submitBtn = document.getElementById('submitBtn');
 
-        // KORREKTUR: Validiert jetzt sauber echte 6 Ziffern ohne falsche Maskierungen
+        // Fehlerfreie Validierung: Prüft exakt auf 6 Ziffern (keine Sonderzeichen erlaubt)
         if (!/^\d{6}\$/.test(matrixNr)) {
             alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und nur aus Zahlen bestehen!");
             return;
@@ -175,23 +160,23 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
 
-        // Daten sauber per GET-Request an das Apps Script übergeben, um die Antwort direkt zu erhalten
+        // Daten an Google Apps Script senden
         fetch(`${WEB_APP_URL}?matrixNr=${encodeURIComponent(matrixNr)}&menu=${encodeURIComponent(menu)}`, {
             method: 'GET'
         })
         .then(res => res.json())
         .then(data => {
-            if(data.status === "success") {
+            if (data.status === "success") {
                 document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
                 document.getElementById('thankYouModal').style.display = 'flex';
             } else {
-                alert("Fehler vom Server: " + data.message);
+                alert("Fehler: " + data.message);
             }
             resetForm();
         })
         .catch(err => {
             console.error(err);
-            alert("Verbindungsfehler zum Google Sheet. Bitte prüfe, ob die Web-App-URL korrekt eingetragen und als 'Jeder' freigegeben ist.");
+            alert("Verbindung zum Google Sheet fehlgeschlagen. Überprüfe die Web-App-URL und die Berechtigungen.");
             resetForm();
         });
     });
@@ -210,3 +195,4 @@
 
 </body>
 </html>
+
