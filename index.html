@@ -141,85 +141,84 @@
 </div>
 
 <script>
-    
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
+    // ⚠️ HIER DEINE KOPIERTE GOOGLE APPS SCRIPT WEB-APP URL EINTRAGEN:
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const matrikel = document.getElementById('matrikel').value.trim();
-        const menu = document.getElementById('menu').value;
+        const matrikelInput = document.getElementById('matrikel').value.trim();
+        const selectedMenu = document.querySelector('input[name="menue"]:checked');
         const submitBtn = document.getElementById('submitBtn');
-        
-        // Validierung: Prüfen ob genau 6 Ziffern vorliegen
-        const matrikelRegex = /^\d{6}$/;
-        if (!matrikelRegex.test(matrikel)) {
-            alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
+
+        // 1. Validierung: Matrikelnummer exakt 6-stellig und numerisch
+        if (matrikelInput.length !== 6 || isNaN(matrikelInput)) {
+            alert("Fehler: Die Matrikelnummer muss exakt 6 Ziffern lang sein.");
             return;
         }
-        
-        if (!menu) {
-            alert("Fehler: Bitte wähle ein Menü aus!");
+
+        // 2. Validierung: Menü gewählt
+        if (!selectedMenu) {
+            alert("Fehler: Bitte wähle ein Menü aus.");
             return;
         }
-        
-        // Button sperren während des Sendens
+
+        // Button während des Sendens sperren
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
-        
-        // Daten an Google Sheets senden
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", // Verhindert CORS Blockaden bei einfachen Weiterleitungen
-            headers: {
-                "Content-Type": "text/plain"
-            },
-            body: JSON.stringify({ matrikel: matrikel, menu: menu })
+
+        // Datenpaket schnüren
+        const payload = {
+            matrikel: matrikelInput,
+            menue: selectedMenu.value
+        };
+
+        // Daten an Google Sheets senden via POST
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Verhindert CORS-Blockaden bei simplen Skripten
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         })
         .then(() => {
-            // Da "no-cors" genutzt wird, können wir die Antwort nicht direkt lesen.
-            // Um die eindeutige Nummer anzuzeigen, holen wir uns hier einen Fallback 
-            // oder nutzen ein zweites Verfahren. Da Apps Script bei 'no-cors' keine Leserechte erlaubt,
-            // ist die sauberste Lösung für echte Rückgabewerte die Generierung im Frontend,
-            // oder wir stellen Apps Script auf ein auslesbares Verfahren um.
-            
-            // HINWEIS ZUR GENERIERUNG: Da Google Apps Script bei CORS oft blockiert, 
-            // generieren wir die 3-stellige Nummer direkt hier sicherheitshalber mit, 
-            // falls das Skript oben stumm antwortet, ODER wir nutzen einen Trick:
-            
-            // Da wir sichergehen wollen, dass die Nummer angezeigt wird, erzeugen wir hier temporär eine, 
-            // falls Google Script im Hintergrund einfach nur "erfolgreich verbucht" signalisiert.
-            // Für ein fehlerfreies UI ohne CORS-Probleme simulieren wir das Anzeigen im Modal:
-            
-            // Da wir oben im Script die Nummer generieren, stellen wir sicher, dass sie ankommt.
-            // Um den Code simpel zu halten, erzeugen wir die Zufallsnummer im Frontend und schicken sie mit,
-            // das verhindert asynchrone Lesekonflikte mit Google!
-            
-            // OPTIMIERTER WEG (Empfohlen für GitHub Pages): 
-            // Wir generieren die Nummer direkt hier und senden sie fertig an Google!
-            const orderNum = Math.floor(Math.random() * 900) + 100;
-            
-            // Zweiter finaler Sende-Versuch mit fertiger Nummer im Datensatz:
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ matrikel: matrikel, menu: menu, orderNumber: orderNum })
+            /* 
+               Hinweis: 'no-cors' erlaubt es der App aus Sicherheitsgründen nicht, die direkte JSON-Antwort zu lesen.
+               Da wir die Nummer aber zwingend anzeigen müssen, holen wir uns hier eine lokal synchronisierte
+               Zufallsnummer basierend auf der Zeit oder lassen die Logik im Hintergrund laufen.
+               
+               BESSERE METHODE ohne no-cors Blockade für echte Antwort-Auswertung:
+            */
+            return fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' }, // Umgeht CORS Preflight Probleme im Apps Script
+                body: JSON.stringify(payload)
             });
+        })
+        .then(response => response.json())
+        .then(res => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Bestellung absenden";
 
-            document.getElementById('displayOrderNumber').innerText = "#" + orderNum;
-            document.getElementById('successModal').style.display = 'flex';
+            if(res.status === "success") {
+                // Abholnummer im Pop-up anzeigen und öffnen
+                document.getElementById('displayOrderId').innerText = "#" + res.orderId;
+                document.getElementById('modalOverlay').style.display = 'flex';
+            } else {
+                alert("Fehler von der Datenbank: " + res.message);
+            }
         })
         .catch(error => {
-            console.error("Fehler!", error);
-            alert("Bei der Bestellung ist ein Fehler aufgetreten.");
-        })
-        .finally(() => {
             submitBtn.disabled = false;
-            submitBtn.innerText = "Kostenpflichtig Bestellen";
+            submitBtn.innerText = "Bestellung absenden";
+            console.error("Fehler:", error);
+            alert("Verbindungsfehler. Die Bestellung konnte nicht übertragen werden.");
         });
     });
 
     function closeModal() {
-        document.getElementById('successModal').style.display = 'none';
+        // Modal schließen
+        document.getElementById('modalOverlay').style.display = 'none';
+        // Formular zurücksetzen für die nächste Eingabe
         document.getElementById('orderForm').reset();
     }
 </script>
