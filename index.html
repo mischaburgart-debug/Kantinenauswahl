@@ -142,7 +142,7 @@
 
 <script>
     // WICHTIG: Ersetze diese URL mit deiner aktuellen Google Web-App URL!
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD093hnZOCUM3E9xsM_HNrIkJ_r-xs-pcEnp9JSXi5r8TFlcrUiGJqa7eAwPduA-8l/exec";
+    const GOOGLE_SCRIPT_URL = "DEINE_GOOGLE_WEB_APP_URL";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -151,7 +151,7 @@
         const menu = document.getElementById('menu').value;
         const submitBtn = document.getElementById('submitBtn');
         
-        // --- Deine funktionierende Validierung bleibt unberührt ---
+        // Validierung bleibt gleich
         const matrikelRegex = /^\d{6}$/;
         if (!matrikelRegex.test(matrikel)) {
             alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
@@ -166,35 +166,31 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
         
-        // --- GEFIXXTER SENDE-PROZESS ---
+        // HIER WIRD DIE NUMMER GENERIERT: Damit sie auf dem Screen und im Sheet identisch ist!
+        const generatedOrderNumber = (Math.floor(Math.random() * 900) + 100).toString();
+        
         const payload = {
             matrikel: matrikel,
-            menu: menu
+            menu: menu,
+            orderNumber: generatedOrderNumber // Die Nummer reist direkt im Paket mit
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
+            mode: "no-cors", // Verhindert CORS-Sperren komplett
             headers: {
-                "Content-Type": "text/plain" // Verhindert CORS-Blockaden im Browser
+                "Content-Type": "text/plain"
             },
             body: JSON.stringify(payload)
         })
-        .then(response => {
-            if (!response.ok) throw new Error("Netzwerk-Antwort war nicht ok");
-            return response.json();
-        })
-        .then(data => {
-            if (data.result === "success") {
-                // Setzt die vom Google Sheet generierte, echte Nummer in dein Fenster ein
-                document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
-                document.getElementById('successModal').style.display = 'flex';
-            } else {
-                alert("Fehler von Google Sheets: " + data.message);
-            }
+        .then(() => {
+            // Zeigt dem Besteller EXAKT die Nummer an, die auch im Paket an Google geschickt wurde
+            document.getElementById('displayOrderNumber').innerText = "#" + generatedOrderNumber;
+            document.getElementById('successModal').style.display = 'flex';
         })
         .catch(error => {
             console.error("Fehler!", error);
-            alert("Verbindung fehlgeschlagen. Bitte prüfe die Web-App-URL und ob bei 'Wer hat Zugriff' wirklich 'Jeder' ausgewählt ist.");
+            alert("Verbindung fehlgeschlagen. Bitte prüfe deine Web-App-URL.");
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -202,12 +198,12 @@
         });
     });
 
-    // --- Deine funktionierende Schließen-Funktion bleibt unberührt ---
     function closeModal() {
         document.getElementById('successModal').style.display = 'none';
         document.getElementById('orderForm').reset();
     }
 </script>
+
 
 
 
