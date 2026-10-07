@@ -141,83 +141,74 @@
 </div>
 
 <script>
-    // ⚠️ ERSETZE DIESE URL MIT DEINER ECHTEN GOOGLE WEB-APP-URL (endet auf /exec)
+    // ⚠️ HIER DEINE KOPIERTE GOOGLE WEB-APP-URL EINTRAGEN (endet auf /exec)
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
 
-    // Formular-Event-Listener für das Absenden abfangen
     document.getElementById('orderForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Verhindert das Neuladen der Seite
+        e.preventDefault(); 
         
         const matrikelInput = document.getElementById('matrikel').value.trim();
         const menuSelect = document.getElementById('menu').value;
         const submitBtn = document.getElementById('submitBtn');
 
-        // 1. Validierung: Ist die Nummer exakt 6-stellig und besteht nur aus Zahlen?
+        // 1. Validierung: Genau 6 Ziffern?
         if (matrikelInput.length !== 6 || isNaN(matrikelInput)) {
             alert("Fehler: Die Matrikelnummer muss exakt 6 Ziffern lang sein.");
             return;
         }
 
-        // 2. Validierung: Wurde ein Menü ausgewählt?
+        // 2. Validierung: Menü ausgewählt?
         if (menuSelect === "") {
             alert("Fehler: Bitte wähle ein Menü aus.");
             return;
         }
 
-        // Button während der Übertragung sperren und Text ändern
+        // Button sperren während der Übertragung
         submitBtn.disabled = true;
+        const originalText = submitBtn.innerText;
         submitBtn.innerText = "Wird verarbeitet...";
 
-        // Datenpaket vorbereiten
         const payload = {
             matrikel: matrikelInput,
             menue: menuSelect
         };
 
-        // Daten per POST an das Google Apps Script senden
+        // Daten an Google Sheets senden
         fetch(WEB_APP_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain' }, // Umgeht CORS-Sperren im Browser
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(payload)
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error("Netzwerkantwort war nicht ok");
-            }
+            if (!response.ok) throw new Error("Server-Fehler");
             return response.json();
         })
         .then(res => {
-            // Button wieder freigeben
             submitBtn.disabled = false;
-            submitBtn.innerText = "Kostenpflichtig Bestellen";
+            submitBtn.innerText = originalText;
 
             if (res.status === "success") {
-                // Die vom Google Script generierte, eindeutige 3-stellige Nummer anzeigen
+                // Nummer anzeigen und Modal öffnen
                 document.getElementById('displayOrderNumber').innerText = "#" + res.orderId;
-                
-                // Modal-Erfolgsfenster einblenden
                 document.getElementById('successModal').style.display = 'flex';
             } else {
-                alert("Fehler von der Datenbank: " + res.message);
+                alert("Fehler aus der Datenbank: " + res.message);
             }
         })
         .catch(error => {
-            // Button im Fehlerfall wieder freigeben
             submitBtn.disabled = false;
-            submitBtn.innerText = "Kostenpflichtig Bestellen";
+            submitBtn.innerText = originalText;
             console.error("Fehler:", error);
-            alert("Verbindungsfehler. Die Bestellung konnte nicht an Google Sheets übertragen werden.");
+            alert("Verbindungsfehler. Überprüfe die Google Apps Script URL.");
         });
     });
 
-    // Funktion zum Schließen des Modals und Zurücksetzen des Formulars
     function closeModal() {
-        // Modal ausblenden
         document.getElementById('successModal').style.display = 'none';
-        
-        // Formular komplett leeren, damit man wieder bei der leeren Auswahl steht
         document.getElementById('orderForm').reset();
     }
 </script>
+
 </body>
 </html>
+
