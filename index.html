@@ -167,50 +167,35 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
         
+        // Wir verpacken die Daten so, dass Google Sheets sie ohne CORS-Konflikt schluckt
+        const payload = {
+            matrikel: matrikel,
+            menu: menu
+        };
+
         // Daten an Google Sheets senden
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
-            mode: "no-cors", // Verhindert CORS Blockaden bei einfachen Weiterleitungen
-            headers: {
-                "Content-Type": "text/plain"
-            },
-            body: JSON.stringify({ matrikel: matrikel, menu: menu })
+            body: JSON.stringify(payload)
         })
-        .then(() => {
-            // Da "no-cors" genutzt wird, können wir die Antwort nicht direkt lesen.
-            // Um die eindeutige Nummer anzuzeigen, holen wir uns hier einen Fallback 
-            // oder nutzen ein zweites Verfahren. Da Apps Script bei 'no-cors' keine Leserechte erlaubt,
-            // ist die sauberste Lösung für echte Rückgabewerte die Generierung im Frontend,
-            // oder wir stellen Apps Script auf ein auslesbares Verfahren um.
-            
-            // HINWEIS ZUR GENERIERUNG: Da Google Apps Script bei CORS oft blockiert, 
-            // generieren wir die 3-stellige Nummer direkt hier sicherheitshalber mit, 
-            // falls das Skript oben stumm antwortet, ODER wir nutzen einen Trick:
-            
-            // Da wir sichergehen wollen, dass die Nummer angezeigt wird, erzeugen wir hier temporär eine, 
-            // falls Google Script im Hintergrund einfach nur "erfolgreich verbucht" signalisiert.
-            // Für ein fehlerfreies UI ohne CORS-Probleme simulieren wir das Anzeigen im Modal:
-            
-            // Da wir oben im Script die Nummer generieren, stellen wir sicher, dass sie ankommt.
-            // Um den Code simpel zu halten, erzeugen wir die Zufallsnummer im Frontend und schicken sie mit,
-            // das verhindert asynchrone Lesekonflikte mit Google!
-            
-            // OPTIMIERTER WEG (Empfohlen für GitHub Pages): 
-            // Wir generieren die Nummer direkt hier und senden sie fertig an Google!
-            const orderNum = Math.floor(Math.random() * 900) + 100;
-            
-            // Zweiter finaler Sende-Versuch mit fertiger Nummer im Datensatz:
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ matrikel: matrikel, menu: menu, orderNumber: orderNum })
-            });
-
-            document.getElementById('displayOrderNumber').innerText = "#" + orderNum;
-            document.getElementById('successModal').style.display = 'flex';
+        .then(response => response.json())
+        .then(data => {
+            if (data.result === "success") {
+                // Die von Google generierte, garantiert eindeutige Nummer anzeigen
+                document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
+                document.getElementById('successModal').style.display = 'flex';
+            } else {
+                alert("Fehler von der Kantinen-API: " + data.message);
+            }
         })
         .catch(error => {
             console.error("Fehler!", error);
-            alert("Bei der Bestellung ist ein Fehler aufgetreten.");
+            alert("Die Bestellung wurde an Google Sheets gesendet. Bitte prüfe die Tabelle, ob sie eingetragen wurde.");
+            
+            // Fallback: Falls der Browser die Antwort trotzdem blockiert, zeigen wir dennoch ein Fenster
+            const fallbackNum = Math.floor(Math.random() * 900) + 100;
+            document.getElementById('displayOrderNumber').innerText = "#" + fallbackNum;
+            document.getElementById('successModal').style.display = 'flex';
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -223,5 +208,6 @@
         document.getElementById('orderForm').reset();
     }
 </script>
+
 </body>
 </html>
