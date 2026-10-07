@@ -141,25 +141,25 @@
 </div>
 
 <script>
-    // ⚠️ HIER DEINE KOPIERTE GOOGLE APPS SCRIPT WEB-APP URL EINTRAGEN:
+    // ⚠️ ERSETZE DIESE URL MIT DEINER KOPIERTEN GOOGLE WEB-APP URL!
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const matrikelInput = document.getElementById('matrikel').value.trim();
-        const selectedMenu = document.querySelector('input[name="menue"]:checked');
+        const matrixNr = document.getElementById('matrixNr').value.trim();
+        const menu = document.getElementById('menuSelect').value;
         const submitBtn = document.getElementById('submitBtn');
 
-        // 1. Validierung: Matrikelnummer exakt 6-stellig und numerisch
-        if (matrikelInput.length !== 6 || isNaN(matrikelInput)) {
-            alert("Fehler: Die Matrikelnummer muss exakt 6 Ziffern lang sein.");
+        // Validierung: 6-stellig und rein numerisch
+        if (!/^\d{6}\$/.test(matrixNr)) {
+            alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und nur aus Zahlen bestehen!");
             return;
         }
 
-        // 2. Validierung: Menü gewählt
-        if (!selectedMenu) {
-            alert("Fehler: Bitte wähle ein Menü aus.");
+        // Validierung: Menü gewählt
+        if (!menu) {
+            alert("Fehler: Bitte wähle ein Menü aus!");
             return;
         }
 
@@ -167,58 +167,58 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
 
-        // Datenpaket schnüren
-        const payload = {
-            matrikel: matrikelInput,
-            menue: selectedMenu.value
-        };
-
-        // Daten an Google Sheets senden via POST
+        // Daten an Google Apps Script via POST senden
         fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors', // Verhindert CORS-Blockaden bei simplen Skripten
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            mode: 'no-cors', // Verhindert CORS-Fehler bei Google Apps Script Posts
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                matrixNr: matrixNr,
+                menu: menu
+            })
         })
         .then(() => {
-            /* 
-               Hinweis: 'no-cors' erlaubt es der App aus Sicherheitsgründen nicht, die direkte JSON-Antwort zu lesen.
-               Da wir die Nummer aber zwingend anzeigen müssen, holen wir uns hier eine lokal synchronisierte
-               Zufallsnummer basierend auf der Zeit oder lassen die Logik im Hintergrund laufen.
-               
-               BESSERE METHODE ohne no-cors Blockade für echte Antwort-Auswertung:
-            */
-            return fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' }, // Umgeht CORS Preflight Probleme im Apps Script
-                body: JSON.stringify(payload)
+            // Da wir 'no-cors' nutzen, können wir die Antwort nicht direkt lesen.
+            // Deshalb generieren wir die Nummer synchron/asynchron passend zur Übermittlung
+            // oder überlassen die Vergabe komplett dem Apps Script. 
+            // Um die Eindeutigkeit sicherzustellen, holen wir uns vorab ein Signal oder 
+            // lassen uns eine ID lokal ermitteln, die der Server ebenfalls akzeptiert.
+            
+            // Empfohlener Web-App-Weg für eindeutige Nummern mit No-CORS-Fallbacks:
+            // Wir erzeugen eine sichere Zufallsnummer, das Script filtert Duplikate im Sheet.
+            const generatedNum = Math.floor(100 + Math-random() * 900); // 3-stellig (100-999)
+            
+            // Alternativ senden wir einen GET Request für echte Rückgabewerte.
+            // Um es simpel und fehlerfrei zu halten, triggern wir hier das Erfolgsfenster:
+            fetch(`${WEB_APP_URL}?matrixNr=${matrixNr}&menu=${encodeURIComponent(menu)}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === "success") {
+                    document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
+                    document.getElementById('thankYouModal').style.display = 'flex';
+                } else {
+                    alert("Fehler bei der Nummernvergabe. Bitte erneut versuchen.");
+                }
+                resetForm();
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Verbindungsfehler zum Google Sheet.");
+                resetForm();
             });
-        })
-        .then(response => response.json())
-        .then(res => {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Bestellung absenden";
-
-            if(res.status === "success") {
-                // Abholnummer im Pop-up anzeigen und öffnen
-                document.getElementById('displayOrderId').innerText = "#" + res.orderId;
-                document.getElementById('modalOverlay').style.display = 'flex';
-            } else {
-                alert("Fehler von der Datenbank: " + res.message);
-            }
-        })
-        .catch(error => {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Bestellung absenden";
-            console.error("Fehler:", error);
-            alert("Verbindungsfehler. Die Bestellung konnte nicht übertragen werden.");
         });
     });
 
+    function resetForm() {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Kostenpflichtig bestellen";
+    }
+
     function closeModal() {
-        // Modal schließen
-        document.getElementById('modalOverlay').style.display = 'none';
-        // Formular zurücksetzen für die nächste Eingabe
+        document.getElementById('thankYouModal').style.display = 'none';
         document.getElementById('orderForm').reset();
     }
 </script>
