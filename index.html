@@ -140,9 +140,10 @@
     </div>
 </div>
 
+
 <script>
     // WICHTIG: Ersetze diese URL mit deiner aktuellen Google Web-App URL!
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD093hnZOCUM3E9xsM_HNrIkJ_r-xs-pcEnp9JSXi5r8TFlcrUiGJqa7eAwPduA-8l/exec";
+    const GOOGLE_SCRIPT_URL = "DEINE_GOOGLE_WEB_APP_URL";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -151,7 +152,7 @@
         const menu = document.getElementById('menu').value;
         const submitBtn = document.getElementById('submitBtn');
         
-        // Validierung bleibt gleich
+        // Validierung (Unberührt)
         const matrikelRegex = /^\d{6}$/;
         if (!matrikelRegex.test(matrikel)) {
             alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
@@ -166,31 +167,32 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
         
-        // HIER WIRD DIE NUMMER GENERIERT: Damit sie auf dem Screen und im Sheet identisch ist!
-        const generatedOrderNumber = (Math.floor(Math.random() * 900) + 100).toString();
-        
         const payload = {
             matrikel: matrikel,
-            menu: menu,
-            orderNumber: generatedOrderNumber // Die Nummer reist direkt im Paket mit
+            menu: menu
         };
 
+        // Absenden ohne "no-cors", damit wir die Antwort von Google lesen dürfen
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
-            mode: "no-cors", // Verhindert CORS-Sperren komplett
             headers: {
                 "Content-Type": "text/plain"
             },
             body: JSON.stringify(payload)
         })
-        .then(() => {
-            // Zeigt dem Besteller EXAKT die Nummer an, die auch im Paket an Google geschickt wurde
-            document.getElementById('displayOrderNumber').innerText = "#" + generatedOrderNumber;
-            document.getElementById('successModal').style.display = 'flex';
+        .then(response => response.json()) // Wir wandeln die Antwort in JSON um
+        .then(data => {
+            if (data.result === "success") {
+                // HIER PASSIERT ES: Das Pop-up nimmt exakt die Nummer von Google Sheets entgegen!
+                document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
+                document.getElementById('successModal').style.display = 'flex';
+            } else {
+                alert("Fehler aus Google Sheets: " + data.message);
+            }
         })
         .catch(error => {
             console.error("Fehler!", error);
-            alert("Verbindung fehlgeschlagen. Bitte prüfe deine Web-App-URL.");
+            alert("Es gab ein Problem bei der Datenübertragung. Bitte stelle sicher, dass du die Web-App bei Google als 'Neue Version' bereitgestellt hast.");
         })
         .finally(() => {
             submitBtn.disabled = false;
@@ -203,7 +205,6 @@
         document.getElementById('orderForm').reset();
     }
 </script>
-
 
 
 
