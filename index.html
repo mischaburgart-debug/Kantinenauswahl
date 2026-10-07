@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kantinen Menüauswahl</title>
+    <title>Kantine - Menüauswahl</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
             display: flex;
             justify-content: center;
         }
@@ -19,19 +20,22 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            gap: 30px;
         }
-        .main-form {
-            flex: 2;
-            padding-right: 20px;
-            border-right: 1px solid #ccc;
-        }
-        .sidebar {
+        .form-section {
             flex: 1;
-            padding-left: 20px;
         }
+        .info-section {
+            width: 300px;
+            background-color: #eef2f3;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 5px solid #007bff;
+        }
+        h2, h3 { margin-top: 0; color: #333; }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         label {
             display: block;
@@ -40,72 +44,74 @@
         }
         input[type="text"], select {
             width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         button {
             background-color: #007bff;
             color: white;
-            padding: 10px 15px;
             border: none;
+            padding: 12px 20px;
             border-radius: 4px;
             cursor: pointer;
-            width: 100%;
             font-size: 16px;
+            width: 100%;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .menu-info {
-            background: #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        /* Popup / Modal Styling */
+        button:hover { background-color: #0056b3; }
+        
+        /* Modal-Fenster (Overlay) */
         .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; top: 0; width: 100%; height: 100%; 
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5);
-            justify-content: center; align-items: center;
+            justify-content: center;
+            align-items: center;
         }
         .modal-content {
-            background-color: white;
+            background: white;
             padding: 30px;
             border-radius: 8px;
             text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             max-width: 400px;
             width: 100%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .modal-content h2 { color: #28a745; }
         .order-number {
             font-size: 32px;
             font-weight: bold;
-            color: #333;
-            margin: 20px 0;
+            color: #28a745;
+            margin: 15px 0;
             letter-spacing: 2px;
         }
+        .close-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .close-btn:hover { background-color: #5a6268; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="main-form">
-        <h2>Kantine - Essensbestellung</h2>
+    <!-- Linker Bereich: Formular -->
+    <div class="form-section">
+        <h2>Kantine Essensbestellung</h2>
         <form id="orderForm">
             <div class="form-group">
-                <label for="matrixNr">Matrikelnummer (6-stellig):</label>
-                <input type="text" id="matrixNr" maxlength="6" placeholder="z.B. 123456" required>
+                <label for="matrikel">Matrikelnummer (6-stellig):</label>
+                <input type="text" id="matrikel" maxlength="6" placeholder="z.B. 123456" required>
             </div>
             
             <div class="form-group">
-                <label for="menuSelect">Menü auswählen:</label>
-                <select id="menuSelect" required>
+                <label for="menu">Menü auswählen:</label>
+                <select id="menu" required>
                     <option value="">-- Bitte wählen --</option>
                     <option value="Menü 1">Menü 1</option>
                     <option value="Menü 2">Menü 2</option>
@@ -113,70 +119,77 @@
                 </select>
             </div>
             
-            <button type="submit" id="submitBtn">Kostenpflichtig bestellen</button>
+            <button type="submit" id="submitBtn">Kostenpflichtig Bestellen</button>
         </form>
     </div>
 
-    <div class="sidebar">
-        <h3>Aktuelle Menüs & Preise</h3>
-        <div class="menu-info"><strong>Menü 1 (Klassiker)</strong><br>Rindergulasch mit Spätzle.<br><em>Preis: 5,50 €</em></div>
-        <div class="menu-info"><strong>Menü 2 (Vegetarisch)</strong><br>Vegetarische Lasagne.<br><em>Preis: 4,80 €</em></div>
-        <div class="menu-info"><strong>Menü 3 (Vegan)</strong><br>Bunter Salat mit Falafel.<br><em>Preis: 4,20 €</em></div>
+    <!-- Rechter Bereich: Infotext & Kosten -->
+    <div class="info-section">
+        <h3>Speiseplan & Preise</h3>
+        <p><strong>Menü 1:</strong><br>Klassisches Schnitzel mit Pommes und Beilagensalat.<br><em>Preis: 5,50 €</em></p>
+        <hr>
+        <p><strong>Menü 2:</strong><br>Vegetarisches Linsen-Curry mit Duftreis (Vegan).<br><em>Preis: 4,80 €</em></p>
+        <hr>
+        <p><strong>Menü 3:</strong><br>Großer Aktionsteller: Pasta Carbonara.<br><em>Preis: 5,20 €</em></p>
     </div>
 </div>
 
-<div id="thankYouModal" class="modal">
+<!-- Erfolgs-Modal -->
+<div id="successModal" class="modal">
     <div class="modal-content">
         <h2>Vielen Dank für die Bestellung!</h2>
-        <p>Deine Bestellung wurde erfolgreich erfasst.</p>
         <p>Deine Abholnummer lautet:</p>
-        <div class="order-number" id="displayOrderNumber">---</div>
-        <button onclick="closeModal()">Fenster schließen & Zurück</button>
+        <div class="order-number" id="displayOrderNumber">#000</div>
+        <p>Bitte notiere oder merke dir diese Nummer.</p>
+        <button class="close-btn" onclick="closeModal()">Fenster schließen</button>
     </div>
 </div>
 
 <script>
-    // ⚠️ HIER DEINE KOPIERTE GOOGLE WEB-APP URL EINFÜGEN!
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
+    // Deine Google Apps Script Web-App-URL
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const matrixNr = document.getElementById('matrixNr').value.trim();
-        const menu = document.getElementById('menuSelect').value;
+        const matrikel = document.getElementById('matrikel').value.trim();
+        const menu = document.getElementById('menu').value;
         const submitBtn = document.getElementById('submitBtn');
-
-        // Fehlerfreie Validierung: Prüft exakt auf 6 Ziffern (keine Sonderzeichen erlaubt)
-        if (!/^\d{6}\$/.test(matrixNr)) {
-            alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und nur aus Zahlen bestehen!");
+        
+        // Validierung: Genau 6 Ziffern prüfen
+        const matrikelRegex = /^\d{6}\$/;
+        if (!matrikelRegex.test(matrikel)) {
+            alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
             return;
         }
-
+        
         if (!menu) {
             alert("Fehler: Bitte wähle ein Menü aus!");
             return;
         }
-
+        
+        // Button sperren während der Verarbeitung
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
-
-        // Daten an Google Apps Script senden
-        fetch(`${WEB_APP_URL}?matrixNr=${encodeURIComponent(matrixNr)}&menu=${encodeURIComponent(menu)}`, {
-            method: 'GET'
+        
+        // Daten per GET-Anfrage senden, um die Antwort von Google lesen zu können
+        fetch(`${GOOGLE_SCRIPT_URL}?matrixNr=${encodeURIComponent(matrikel)}&menu=${encodeURIComponent(menu)}`, {
+            method: "GET"
         })
-        .then(res => res.json())
+        .then(response => response.json())
         .then(data => {
             if (data.status === "success") {
+                // Setzt exakt die 3-stellige Nummer ein, die Google im Sheet gespeichert hat
                 document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
-                document.getElementById('thankYouModal').style.display = 'flex';
+                document.getElementById('successModal').style.display = 'flex';
             } else {
-                alert("Fehler: " + data.message);
+                alert("Fehler von Google Sheets: " + data.message);
+                resetForm();
             }
-            resetForm();
         })
-        .catch(err => {
-            console.error(err);
-            alert("Verbindung zum Google Sheet fehlgeschlagen. Überprüfe die Web-App-URL und die Berechtigungen.");
+        .catch(error => {
+            console.error("Fehler!", error);
+            alert("Verbindungsfehler zum Google Sheet. Bitte prüfe, ob die Web-App-URL korrekt ist und die Berechtigung auf 'Jeder' steht.");
             resetForm();
         });
     });
@@ -184,15 +197,17 @@
     function resetForm() {
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = false;
-        submitBtn.innerText = "Kostenpflichtig bestellen";
+        submitBtn.innerText = "Kostenpflichtig Bestellen";
     }
 
     function closeModal() {
-        document.getElementById('thankYouModal').style.display = 'none';
+        document.getElementById('successModal').style.display = 'none';
         document.getElementById('orderForm').reset();
+        resetForm();
     }
 </script>
 
 </body>
 </html>
+
 
