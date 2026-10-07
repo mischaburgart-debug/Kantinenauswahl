@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kantine - Menüauswahl</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            gap: 30px;
+        }
+        .form-section {
+            flex: 1;
+        }
+        .info-section {
+            width: 300px;
+            background-color: #eef2f3;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 5px solid #007bff;
+        }
+        h2, h3 { margin-top: 0; color: #333; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover { background-color: #0056b3; }
+        
+        /* Modal-Fenster (Overlay) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .order-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+        .close-btn {
+            background-color: #6c757d;
+        }
+        .close-btn:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Linker Bereich: Formular -->
+    <div class="form-section">
+        <h2>Kantine Essensbestellung</h2>
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="matrikel">Matrikelnummer (6-stellig):</label>
+                <input type="text" id="matrikel" maxlength="6" placeholder="z.B. 123456" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="menu">Menü auswählen:</label>
+                <select id="menu" required>
+                    <option value="">-- Bitte wählen --</option>
+                    <option value="Menü 1">Menü 1</option>
+                    <option value="Menü 2">Menü 2</option>
+                    <option value="Menü 3">Menü 3</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="submitBtn">Kostenpflichtig Bestellen</button>
+        </form>
+    </div>
+
+    <!-- Rechter Bereich: Infotext & Kosten -->
+    <div class="info-section">
+        <h3>Speiseplan & Preise</h3>
+        <p><strong>Menü 1:</strong><br>Klassisches Schnitzel mit Pommes und Beilagensalat.<br><em>Preis: 5,50 €</em></p>
+        <hr>
+        <p><strong>Menü 2:</strong><br>Vegetarisches Linsen-Curry mit Duftreis (Vegan).<br><em>Preis: 4,80 €</em></p>
+        <hr>
+        <p><strong>Menü 3:</strong><br>Großer Aktionsteller: Pasta Carbonara.<br><em>Preis: 5,20 €</em></p>
+    </div>
+</div>
+
+<!-- Erfolgs-Modal -->
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <h2>Vielen Dank für die Bestellung!</h2>
+        <p>Deine Abholnummer lautet:</p>
+        <div class="order-number" id="displayOrderNumber">#000</div>
+        <p>Bitte notiere oder merke dir diese Nummer.</p>
+        <button class="close-btn" onclick="closeModal()">Fenster schließen</button>
+    </div>
+</div>
+
+<script>
+    
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjyUfjUYU_RlBO18HdXUEfjdR7famHUNxKOl6ifzf-hARpjcl84x9aX6sPDB9PVkI/exec";
+
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const matrikel = document.getElementById('matrikel').value.trim();
+        const menu = document.getElementById('menu').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Validierung: Prüfen ob genau 6 Ziffern vorliegen
+        const matrikelRegex = /^\d{6}$/;
+        if (!matrikelRegex.test(matrikel)) {
+            alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
+            return;
+        }
+        
+        if (!menu) {
+            alert("Fehler: Bitte wähle ein Menü aus!");
+            return;
+        }
+        
+        // Button sperren während des Sendens
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Wird gesendet...";
+        
+        // Daten an Google Sheets senden
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors", // Verhindert CORS Blockaden bei einfachen Weiterleitungen
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({ matrikel: matrikel, menu: menu })
+        })
+        .then(() => {
+            // Da "no-cors" genutzt wird, können wir die Antwort nicht direkt lesen.
+            // Um die eindeutige Nummer anzuzeigen, holen wir uns hier einen Fallback 
+            // oder nutzen ein zweites Verfahren. Da Apps Script bei 'no-cors' keine Leserechte erlaubt,
+            // ist die sauberste Lösung für echte Rückgabewerte die Generierung im Frontend,
+            // oder wir stellen Apps Script auf ein auslesbares Verfahren um.
+            
+            // HINWEIS ZUR GENERIERUNG: Da Google Apps Script bei CORS oft blockiert, 
+            // generieren wir die 3-stellige Nummer direkt hier sicherheitshalber mit, 
+            // falls das Skript oben stumm antwortet, ODER wir nutzen einen Trick:
+            
+            // Da wir sichergehen wollen, dass die Nummer angezeigt wird, erzeugen wir hier temporär eine, 
+            // falls Google Script im Hintergrund einfach nur "erfolgreich verbucht" signalisiert.
+            // Für ein fehlerfreies UI ohne CORS-Probleme simulieren wir das Anzeigen im Modal:
+            
+            // Da wir oben im Script die Nummer generieren, stellen wir sicher, dass sie ankommt.
+            // Um den Code simpel zu halten, erzeugen wir die Zufallsnummer im Frontend und schicken sie mit,
+            // das verhindert asynchrone Lesekonflikte mit Google!
+            
+            // OPTIMIERTER WEG (Empfohlen für GitHub Pages): 
+            // Wir generieren die Nummer direkt hier und senden sie fertig an Google!
+            const orderNum = Math.floor(Math.random() * 900) + 100;
+            
+            // Zweiter finaler Sende-Versuch mit fertiger Nummer im Datensatz:
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ matrikel: matrikel, menu: menu, orderNumber: orderNum })
+            });
+
+            document.getElementById('displayOrderNumber').innerText = "#" + orderNum;
+            document.getElementById('successModal').style.display = 'flex';
+        })
+        .catch(error => {
+            console.error("Fehler!", error);
+            alert("Bei der Bestellung ist ein Fehler aufgetreten.");
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Kostenpflichtig Bestellen";
+        });
+    });
+
+    function closeModal() {
+        document.getElementById('successModal').style.display = 'none';
+        document.getElementById('orderForm').reset();
+    }
+</script>
+</body>
+</html>
