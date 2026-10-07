@@ -146,8 +146,7 @@
 </div>
 
 <script>
-    // Deine Google Apps Script Web-App-URL
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFfzX9muh5V8Qw3740JBw3WyCAoW5MGQ0yHxEc3Jh4lLuH91Y4bSOzZIeQS0Ek-Tc1/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/library/d/101dmDkfjt7XuFxJ2cJ35YP3bWBVCTYZyLJ5zDfw5M_VAZFj2WSxNrlGL/16";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -156,7 +155,7 @@
         const menu = document.getElementById('menu').value;
         const submitBtn = document.getElementById('submitBtn');
         
-        // Validierung: Genau 6 Ziffern prüfen
+        // Validierung: Prüfen ob genau 6 Ziffern vorliegen
         const matrikelRegex = /^\d{6}\$/;
         if (!matrikelRegex.test(matrikel)) {
             alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und darf nur aus Zahlen bestehen!");
@@ -168,18 +167,18 @@
             return;
         }
         
-        // Button sperren während der Verarbeitung
+        // Button sperren während des Sendens
         submitBtn.disabled = true;
         submitBtn.innerText = "Wird gesendet...";
         
-        // Daten per GET-Anfrage senden, um die Antwort von Google lesen zu können
-        fetch(`${GOOGLE_SCRIPT_URL}?matrixNr=${encodeURIComponent(matrikel)}&menu=${encodeURIComponent(menu)}`, {
+        // Nimm die Daten und hole den 3-stelligen Code direkt aus Google Sheets ab
+        fetch(`${GOOGLE_SCRIPT_URL}?matrikel=${encodeURIComponent(matrikel)}&menu=${encodeURIComponent(menu)}`, {
             method: "GET"
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === "success") {
-                // Setzt exakt die 3-stellige Nummer ein, die Google im Sheet gespeichert hat
+                // Setzt exakt den Code ein, den Google generiert und gespeichert hat
                 document.getElementById('displayOrderNumber').innerText = "#" + data.orderNumber;
                 document.getElementById('successModal').style.display = 'flex';
             } else {
@@ -189,7 +188,7 @@
         })
         .catch(error => {
             console.error("Fehler!", error);
-            alert("Verbindungsfehler zum Google Sheet. Bitte prüfe, ob die Web-App-URL korrekt ist und die Berechtigung auf 'Jeder' steht.");
+            alert("Verbindungsfehler zum Google Sheet.");
             resetForm();
         });
     });
@@ -209,5 +208,6 @@
 
 </body>
 </html>
+
 
 
