@@ -151,8 +151,8 @@
 </div>
 
 <script>
-    
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzEFzTexfOSwAm9o-IZXhKW_yg5OaKrJB9y2DjYc603TduXwUzciK7UJ4wVz0je5kqS/exec";
+    // ⚠️ ERSETZE DIESE URL MIT DEINER KOPIERTEN GOOGLE WEB-APP URL!
+    const WEB_APP_URL = "HIER_DEINE_APPS_SCRIPT_URL_EINFÜGEN";
 
     document.getElementById('orderForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -162,7 +162,7 @@
         const submitBtn = document.getElementById('submitBtn');
 
         // Validierung: 6-stellig und rein numerisch
-        if (!/^\d{5}\$/.test(matrixNr)) {
+        if (!/^\d{6}\$/.test(matrixNr)) {
             alert("Fehler: Die Matrikelnummer muss genau 6-stellig sein und nur aus Zahlen bestehen!");
             return;
         }
